@@ -6,7 +6,7 @@ import { ChakraProvider } from "@chakra-ui/react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { RecoilRoot } from "recoil";
 import { Atoms } from "./examples/Atoms";
-import { Selectors } from "./examples/Selectos";
+import { Selectors } from "./examples/Selectors";
 
 ReactDOM.render(
   <React.StrictMode>
