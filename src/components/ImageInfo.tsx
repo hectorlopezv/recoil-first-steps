@@ -9,7 +9,6 @@ const imageIdState = selector({
   key: "imageId",
   get: ({ get }) => {
     const id = get(selectedElemetnAtom);
-    console.log("id", id);
     if (id === undefined || id === null) return;
 
     return get(elementState(id)).image?.id;
@@ -30,7 +29,7 @@ export const ImageInfo = () => {
   const imageDetails = useRecoilValue(imageInfoState);
 
   return (
-    <VStack spacing={2} alignItems="flex-start" width="100%">
+    <VStack spacing={2} alignItems="flex-start" width="100ewe%">
       <Info label="Author" value={imageDetails.author} />
       <Info label="Image URL" value={imageDetails.url} />
     </VStack>

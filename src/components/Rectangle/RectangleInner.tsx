@@ -9,28 +9,32 @@ import {
 import { getBorderColor, getImageDimensions } from "../../util";
 import { elementState } from "./Rectangle";
 import { editPropertyState } from "../../EditProperties";
-const imageSizeState = selectorFamily({
+export const imageSizeState = selectorFamily({
   key: "imageSize",
   get: (src: string | undefined) => async () => {
     if (src === undefined) return;
+    console.log("hello");
     return await getImageDimensions(src);
   },
 });
 export const RectangleInner = ({
   selected,
   id,
+  setmaxDimens,
 }: {
   selected: boolean;
   id: number;
+  setmaxDimens: (...args: any[]) => void;
 }) => {
   const [element, setElement] = useRecoilState(elementState(id));
   const imageSize = useRecoilValue(imageSizeState(element.image?.src));
   const setSize = useSetRecoilState(
     editPropertyState({ path: "style.size", id })
   );
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!imageSize) return;
 
+    setmaxDimens([imageSize.width, imageSize.height]);
     setSize(imageSize);
   }, [imageSize]);
   return (

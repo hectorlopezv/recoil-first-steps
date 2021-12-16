@@ -1,7 +1,11 @@
 import { Resizable, ResizeHandle } from "react-resizable";
+import { selectorFamily, useRecoilValue } from "recoil";
+import { editPropertyState } from "../EditProperties";
+import { getImageDimensions } from "../util";
 import { Handle } from "./Handle";
-import { ElementStyle } from "./Rectangle/Rectangle";
+import { elementState, ElementStyle } from "./Rectangle/Rectangle";
 
+import { useLayoutEffect, useState } from "react";
 const handlePlacements: ResizeHandle[] = [
   "n",
   "s",
@@ -16,6 +20,9 @@ const handlePlacements: ResizeHandle[] = [
 type ResizeProps = {
   selected: boolean;
   onResize: (style: ElementStyle) => void;
+  keepAspectRatio: boolean;
+  id: number;
+  maxDimens: [number, number] | null;
 } & ElementStyle;
 
 export const Resize: React.FC<ResizeProps> = ({
@@ -24,9 +31,14 @@ export const Resize: React.FC<ResizeProps> = ({
   position,
   size,
   onResize,
+  keepAspectRatio = false,
+  id,
+  maxDimens,
 }) => {
   return (
     <Resizable
+      lockAspectRatio={keepAspectRatio}
+      maxConstraints={maxDimens || [Infinity, Infinity]}
       width={size.width}
       height={size.height}
       onResize={(_, { size: newSize, handle }) => {

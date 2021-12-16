@@ -44,7 +44,49 @@ export const editPropertyState = selectorFamily<
       set(elementState(id), newElement);
     },
 });
+const editSize = selectorFamily<
+  any,
+  { dimension: "width" | "height"; id: number }
+>({
+  key: "editSize",
+  get:
+    ({ dimension, id }) =>
+    ({ get }) => {
+      return get(editPropertyState({ path: `style.size.${dimension}`, id }));
+    },
+  set:
+    ({ dimension, id }) =>
+    ({ set, get }, newValue) => {
+      const hasImage =
+        get(editPropertyState({ path: "image", id })) !== undefined;
+      if (!hasImage) {
+        set(
+          editPropertyState({ path: `style.size.${dimension}`, id }),
+          newValue
+        );
+        return;
+      }
+      const size = editPropertyState({ path: `style.size`, id });
 
+      const dimensions = get(size);
+
+      const aspectRatio = dimensions.width / dimensions.height;
+
+      if (dimension === "width") {
+        set(size, {
+          width: newValue,
+          height: Math.round(newValue / aspectRatio),
+        });
+      }
+
+      if (dimension === "height") {
+        set(size, {
+          height: newValue,
+          width: Math.round(newValue * aspectRatio),
+        });
+      }
+    },
+});
 const hasImageState = selector({
   key: "hasImage",
   get: ({ get }) => {
@@ -75,14 +117,10 @@ export const EditProperties = () => {
       </Section>
 
       <Section heading="Size">
-        <Property
-          label="Width"
-          path="style.size.width"
-          id={selectedElementId}
-        />
-        <Property
+        <SizeProperty label="Width" dimension="width" id={selectedElementId} />
+        <SizeProperty
           label="Height"
-          path="style.size.height"
+          dimension="height"
           id={selectedElementId}
         />
       </Section>
@@ -107,13 +145,38 @@ const Section: React.FC<{ heading: string }> = ({ heading, children }) => {
 const Property = ({ label, path, id }: any) => {
   const [value, setvalue] = useRecoilState(editPropertyState({ path, id }));
   if (value === null) return null;
+  return <PropertyInput label={label} val={value} onChange={setvalue} />;
+};
+const SizeProperty = ({
+  label,
+  dimension,
+  id,
+}: {
+  label: string;
+  id: number;
+  dimension: "width" | "height";
+}) => {
+  const [value, setvalue] = useRecoilState(editSize({ dimension, id }));
+  if (value === null) return null;
+  return <PropertyInput label={label} val={value} onChange={setvalue} />;
+};
+
+const PropertyInput = ({
+  label,
+  val,
+  onChange,
+}: {
+  label: string;
+  val: number;
+  onChange: (value: number) => void;
+}) => {
   return (
     <div>
       <Text fontSize="14px" fontWeight="500" mb="2px">
         {label}
       </Text>
       <InputGroup size="sm" variant="filled">
-        <NumberInput value={value} onChange={(_, value) => setvalue(value)}>
+        <NumberInput value={val} onChange={(_, value) => onChange(value)}>
           <NumberInputField borderRadius="md" />
           <InputRightElement
             pointerEvents="none"
@@ -126,7 +189,6 @@ const Property = ({ label, path, id }: any) => {
     </div>
   );
 };
-
 const Card: React.FC = ({ children }) => (
   <VStack
     position="absolute"

@@ -6,6 +6,8 @@ import { RectangleInner } from "./RectangleInner";
 import { Resize } from "../Resize";
 import { selectedElemetnAtom } from "../../Canvas";
 import { RectangleLoading } from "./RectangleLoading";
+
+import { useState } from "react";
 export type ElementStyle = {
   position: { top: number; left: number };
   size: { width: number; height: number };
@@ -39,11 +41,14 @@ export const elementState = atomFamily<Element, number>({
   key: "element",
   default: defaultElement,
 });
+
 export const Rectangle: FC<props> = ({ id }) => {
   const nodeRef = useRef(null);
   const [selectedElement, setSelectedElement] =
     useRecoilState(selectedElemetnAtom);
   const [element, setElement] = useRecoilState(elementState(id));
+
+  const [maxDimens, setmaxDimens] = useState<[number, number] | null>(null);
   return (
     <RectangleContainer
       position={element.style.position}
@@ -53,6 +58,9 @@ export const Rectangle: FC<props> = ({ id }) => {
       }}
     >
       <Resize
+        maxDimens={maxDimens}
+        id={id}
+        keepAspectRatio={element.image !== undefined}
         selected={id === selectedElement}
         position={element.style.position}
         size={element.style.size}
@@ -80,7 +88,11 @@ export const Rectangle: FC<props> = ({ id }) => {
             <Suspense
               fallback={<RectangleLoading selected={id === selectedElement} />}
             >
-              <RectangleInner selected={id === selectedElement} id={id} />
+              <RectangleInner
+                selected={id === selectedElement}
+                id={id}
+                setmaxDimens={setmaxDimens}
+              />
             </Suspense>
           </div>
         </Drag>
