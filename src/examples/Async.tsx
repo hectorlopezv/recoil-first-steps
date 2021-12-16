@@ -2,6 +2,7 @@ import { Container, Heading, Text } from "@chakra-ui/layout";
 import { Select } from "@chakra-ui/select";
 import axios from "axios";
 import { Suspense, useState } from "react";
+import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import {
   atom,
   useRecoilState,
@@ -48,6 +49,7 @@ const userstate = selectorFamily({
       //no refetching
       //async selector makes the component suspense
       const userData = await axios.get<response>(endPoint(userId));
+      if (userId === 4) throw new Error("User does not exists");
       return userData;
     },
 });
@@ -97,16 +99,35 @@ export const Async = () => {
         <option value="1">User 1</option>
         <option value="2">User 2</option>
         <option value="3">User 3</option>
+        <option value="4">User 4</option>
       </Select>
       {userId !== undefined && (
-        <Suspense fallback={<div>...Loading 2</div>}>
-          <UserData userId={userId} />
-        </Suspense>
+        <ErrorBoundary
+          FallbackComponent={ErrorFallBack}
+          onReset={() => {
+            setUserId(undefined);
+          }}
+        >
+          <Suspense fallback={<div>...Loading 2</div>}>
+            <UserData userId={userId} />
+          </Suspense>
+        </ErrorBoundary>
       )}
     </Container>
   );
 };
-
+const ErrorFallBack = ({ error, resetErrorBoundary }: FallbackProps) => {
+  return (
+    <>
+      return (
+      <div role="alert">
+        <p>Something went wrong:</p>
+        <pre>{error.message}</pre>
+        <button onClick={resetErrorBoundary}>Try again</button>
+      </div>
+    </>
+  );
+};
 const UserData = ({ userId }: { userId: number }) => {
   const user = useRecoilValue(userstate(userId));
 
