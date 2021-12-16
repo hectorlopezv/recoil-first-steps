@@ -8,6 +8,7 @@ import { RecoilRoot } from "recoil";
 import { Atoms } from "./examples/Atoms";
 import { Selectors } from "./examples/Selectors";
 import { Async } from "./examples/Async";
+import { AtomEffects } from "./examples/AtomsEffects";
 
 ReactDOM.render(
   <React.StrictMode>
@@ -19,6 +20,7 @@ ReactDOM.render(
             <Route path="/examples/atoms" element={<Atoms />} />
             <Route path="/examples/selectors" element={<Selectors />} />
             <Route path="/examples/async" element={<Async />} />
+            <Route path="/examples/atomEffects" element={<AtomEffects />} />
           </Routes>
         </BrowserRouter>
       </ChakraProvider>
