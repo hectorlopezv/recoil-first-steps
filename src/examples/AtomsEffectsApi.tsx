@@ -17,7 +17,45 @@ type ItemType = {
   label: string;
   checked: boolean;
 };
+let cacheItems: Record<string, ItemType | undefined>;
+const getItems = async () => {
+  if (!cacheItems) {
+    cacheItems = await shoppingListAPI.getItems();
+  }
+  return cacheItems;
+};
 
+const getItem = async (id: number) => {
+  const items = await getItems();
+
+  return items[id];
+};
+
+class CachedApi {
+  cachedItems: Record<number, ItemType> | undefined;
+
+  private async getItems() {
+    if (!this.cachedItems) {
+      this.cachedItems = await shoppingListAPI.getItems();
+    }
+
+    return this.cachedItems;
+  }
+
+  async getIds() {
+    const items = await this.getItems();
+    return Object.keys(items).map((id) => parseInt(id));
+  }
+
+  async getItem(id: number) {
+    const items = await this.getItems();
+    const item = new DefaultValue();
+    if (items[id] === undefined) return item;
+    return items[id];
+  }
+}
+
+const cachedApi = new CachedApi();
 const idsState = atom<number[]>({
   key: "ids",
   default: [],
@@ -25,10 +63,8 @@ const idsState = atom<number[]>({
     ({ setSelf }) => {
       //we pass the promise to setSelf and when it resolves i will populate it
       //becomes a async selector in this case
-      const itemsPromise = shoppingListAPI.getItems().then((items) => {
-        return Object.keys(items).map((id) => parseInt(id));
-      });
-      setSelf(itemsPromise);
+
+      setSelf(cachedApi.getIds());
       // TODO: Fetch a list of item ids from the server
     },
   ],
@@ -38,21 +74,23 @@ const itemState = atomFamily<ItemType, number>({
   key: "item",
   default: { label: "", checked: false },
   effects_UNSTABLE: (id) => [
-    ({ onSet, setSelf }) => {
+    ({ onSet, setSelf, trigger }) => {
       // TODO:
+      //se ejectua cada vez que se crea un atomo en la familia
       // 1. Fetch individual item data from the API and initialise the atoms
-      const itemPromise = shoppingListAPI.getItem(id).then((item) => {
-        if (item === undefined) return new DefaultValue();
-        return item;
-      });
-      setSelf(itemPromise);
+
+      setSelf(cachedApi.getItem(id));
 
       // 2. Update/create individual item data via the API
-      onSet((item, _, isReset) => {
+      console.log("update item State");
+      onSet((item, oldItem, isReset) => {
+        console.log("old", oldItem);
+        if (oldItem instanceof DefaultValue && trigger === "set") return;
         if (isReset) {
           shoppingListAPI.deleteItem(id);
           return;
         }
+        console.log("no entro");
         shoppingListAPI.createOrUpdateItem(id, item);
       });
     },
