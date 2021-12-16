@@ -20,7 +20,10 @@ import { produce } from "immer";
 
 //Selectors families
 
-const editPropertyState = selectorFamily<number, { path: string; id: number }>({
+export const editPropertyState = selectorFamily<
+  any,
+  { path: string; id: number }
+>({
   key: "editProperty",
   get:
     ({ path, id }) =>

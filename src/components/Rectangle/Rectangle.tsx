@@ -1,34 +1,43 @@
-import { FC, useRef } from "react";
+import { FC, Suspense, useRef } from "react";
 import { atomFamily, useRecoilState, useRecoilValue } from "recoil";
 import { Drag } from "../Drag";
 import { RectangleContainer } from "./RectangleContainer";
 import { RectangleInner } from "./RectangleInner";
 import { Resize } from "../Resize";
 import { selectedElemetnAtom } from "../../Canvas";
+import { RectangleLoading } from "./RectangleLoading";
 export type ElementStyle = {
   position: { top: number; left: number };
   size: { width: number; height: number };
 };
 
-export type Element = { style: ElementStyle };
+export type Element = {
+  style: ElementStyle;
+  image?: {
+    id: number;
+    src: string;
+  };
+};
 interface props {
   id: number;
 }
 
-export const elementState = atomFamily<Element, number>({
-  key: "element",
-  default: {
-    style: {
-      position: {
-        top: 0,
-        left: 0,
-      },
-      size: {
-        width: 50,
-        height: 50,
-      },
+export const defaultElement = {
+  style: {
+    position: {
+      top: 0,
+      left: 0,
+    },
+    size: {
+      width: 50,
+      height: 50,
     },
   },
+};
+
+export const elementState = atomFamily<Element, number>({
+  key: "element",
+  default: defaultElement,
 });
 export const Rectangle: FC<props> = ({ id }) => {
   const nodeRef = useRef(null);
@@ -59,6 +68,7 @@ export const Rectangle: FC<props> = ({ id }) => {
           ref={nodeRef}
           onDrag={(position) => {
             setElement({
+              ...element,
               style: {
                 ...element.style,
                 position,
@@ -67,7 +77,11 @@ export const Rectangle: FC<props> = ({ id }) => {
           }}
         >
           <div>
-            <RectangleInner selected={id === selectedElement} />
+            <Suspense
+              fallback={<RectangleLoading selected={id === selectedElement} />}
+            >
+              <RectangleInner selected={id === selectedElement} id={id} />
+            </Suspense>
           </div>
         </Drag>
       </Resize>
