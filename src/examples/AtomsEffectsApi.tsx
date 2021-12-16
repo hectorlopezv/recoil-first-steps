@@ -4,47 +4,62 @@ import { Box, Divider, Heading, VStack } from "@chakra-ui/layout";
 import React, { useState } from "react";
 import {
   atom,
-  AtomEffect,
   atomFamily,
+  DefaultValue,
   useRecoilCallback,
   useRecoilState,
   useRecoilValue,
   useResetRecoilState,
 } from "recoil";
+import { shoppingListAPI } from "./fakeApi";
 
 type ItemType = {
   label: string;
   checked: boolean;
 };
 
-const persistLocalStorage: AtomEffect<any> = ({ onSet, setSelf, node }) => {
-  //se corre una sola vez al montarse
-  const storeData = localStorage.getItem(node.key);
-  console.log("storeData", storeData);
-  if (storeData !== null) {
-    setSelf(JSON.parse(storeData)); //set the value of the atom
-  }
-
-  //despues se corren los otros effectos
-  onSet((newIds, _, isReset) => {
-    isReset
-      ? localStorage.removeItem(node.key)
-      : localStorage.setItem(node.key, JSON.stringify(newIds));
-  });
-};
 const idsState = atom<number[]>({
   key: "ids",
   default: [],
-  effects_UNSTABLE: [persistLocalStorage],
+  effects_UNSTABLE: [
+    ({ setSelf }) => {
+      //we pass the promise to setSelf and when it resolves i will populate it
+      //becomes a async selector in this case
+      const itemsPromise = shoppingListAPI.getItems().then((items) => {
+        return Object.keys(items).map((id) => parseInt(id));
+      });
+      setSelf(itemsPromise);
+      // TODO: Fetch a list of item ids from the server
+    },
+  ],
 });
 
 const itemState = atomFamily<ItemType, number>({
   key: "item",
   default: { label: "", checked: false },
-  effects_UNSTABLE: [persistLocalStorage], //es como functional component se ejecutan de izq a derecha
+  effects_UNSTABLE: (id) => [
+    ({ onSet, setSelf }) => {
+      // TODO:
+      // 1. Fetch individual item data from the API and initialise the atoms
+      const itemPromise = shoppingListAPI.getItem(id).then((item) => {
+        if (item === undefined) return new DefaultValue();
+        return item;
+      });
+      setSelf(itemPromise);
+
+      // 2. Update/create individual item data via the API
+      onSet((item, _, isReset) => {
+        if (isReset) {
+          shoppingListAPI.deleteItem(id);
+          return;
+        }
+        shoppingListAPI.createOrUpdateItem(id, item);
+      });
+    },
+  ],
 });
 
-export const AtomEffectsFamily = () => {
+export const AtomEffectsApi = () => {
   const ids = useRecoilValue(idsState);
   const resetList = useResetRecoilState(idsState);
   const nextId = ids.length;

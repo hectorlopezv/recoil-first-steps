@@ -10,6 +10,7 @@ import { Selectors } from "./examples/Selectors";
 import { Async } from "./examples/Async";
 import { AtomEffects } from "./examples/AtomsEffects";
 import { AtomEffectsFamily } from "./examples/AtomEffectsFamily";
+import { AtomEffectsApi } from "./examples/AtomsEffectsApi";
 
 ReactDOM.render(
   <React.StrictMode>
@@ -22,9 +23,19 @@ ReactDOM.render(
             <Route path="/examples/selectors" element={<Selectors />} />
             <Route path="/examples/async" element={<Async />} />
             <Route path="/examples/atomEffects" element={<AtomEffects />} />
+
             <Route
               path="/examples/AtomEffectsFamily"
               element={<AtomEffectsFamily />}
+            />
+
+            <Route
+              path="/examples/AtomEffectsApi"
+              element={
+                <Suspense fallback={<div>....Loading</div>}>
+                  <AtomEffectsApi />
+                </Suspense>
+              }
             />
           </Routes>
         </BrowserRouter>
