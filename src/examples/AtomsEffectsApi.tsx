@@ -12,7 +12,7 @@ import {
   useResetRecoilState,
 } from "recoil";
 import { shoppingListAPI } from "./fakeApi";
-
+import { selector } from "recoil";
 type ItemType = {
   label: string;
   checked: boolean;
@@ -31,6 +31,17 @@ const getItem = async (id: number) => {
   return items[id];
 };
 
+// const userState = selector({// SELECTOR ARE MADE FOR DERIVED ONE STATE FROM ANOTHER STATE
+//     //COVER PURE FUNCTIONS
+//     //NOT GOOD FOR DATA REFRESH
+//   key: "user",
+//   get: async ({ get }) => {
+//     const userId = get(currentUserId);
+//     return getUserFromApi(userId);
+//   },
+// });
+
+//ATom Effects we can Listen for Changes good for Refresh
 class CachedApi {
   cachedItems: Record<number, ItemType> | undefined;
 
@@ -84,8 +95,8 @@ const itemState = atomFamily<ItemType, number>({
       // 2. Update/create individual item data via the API
       console.log("update item State");
       onSet((item, oldItem, isReset) => {
-        console.log("old", oldItem);
-        if (oldItem instanceof DefaultValue && trigger === "set") return;
+        console.log("isReset", isReset);
+        if (oldItem instanceof DefaultValue && trigger === "get") return;
         if (isReset) {
           shoppingListAPI.deleteItem(id);
           return;
