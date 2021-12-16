@@ -8,7 +8,10 @@ import {
   selector,
   useRecoilValue,
   selectorFamily,
+  atomFamily,
+  useSetRecoilState,
 } from "recoil";
+import { getWeather } from "../fakeApi";
 
 interface response {
   id: number;
@@ -48,6 +51,29 @@ const userstate = selectorFamily({
       return userData;
     },
 });
+
+const weatherState = selectorFamily({
+  key: "weatherdata",
+  get:
+    (userId: number) =>
+    async ({ get }) => {
+      get(weatherRequestIdState(userId));
+      const user = get(userstate(userId));
+      const weather = await getWeather(user.data.address.city);
+      return weather;
+    },
+});
+//refetch techinque
+
+const weatherRequestIdState = atomFamily({
+  key: "weatherRequestId",
+  default: 0,
+});
+
+const useRefetchWeather = (userId: number) => {
+  const setRequestId = useSetRecoilState(weatherRequestIdState(userId));
+  return () => setRequestId((id) => id + 1);
+};
 export const Async = () => {
   const [userId, setUserId] = useState<undefined | number>(undefined);
 
@@ -97,8 +123,25 @@ const UserData = ({ userId }: { userId: number }) => {
           <Text>
             <b>Phone:</b> {user?.data.phone}
           </Text>
+          <Suspense fallback={<div>Loading 2.....</div>}>
+            <Weather userId={userId} />
+          </Suspense>
         </div>
       )}
+    </>
+  );
+};
+const Weather = ({ userId }: { userId: number }) => {
+  const user = useRecoilValue(userstate(userId));
+  const weather = useRecoilValue(weatherState(userId));
+  const refresh = useRefetchWeather(userId);
+  return (
+    <>
+      <Text>
+        <b>Weather for {user.data.address.city}</b>
+        {weather} C
+      </Text>
+      <button onClick={refresh}>refresh weather</button>
     </>
   );
 };
