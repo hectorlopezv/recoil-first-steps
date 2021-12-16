@@ -17,6 +17,8 @@ import {
 import { selectedElemetnAtom } from "./Canvas";
 import { Element, elementState } from "./components/Rectangle/Rectangle";
 import { produce } from "immer";
+import { ImageInfo } from "./components/ImageInfo";
+import { Suspense } from "react";
 
 //Selectors families
 
@@ -42,8 +44,20 @@ export const editPropertyState = selectorFamily<
       set(elementState(id), newElement);
     },
 });
+
+const hasImageState = selector({
+  key: "hasImage",
+  get: ({ get }) => {
+    const id = get(selectedElemetnAtom);
+    if (id === null) return;
+    const element = get(elementState(id));
+
+    return element.image !== undefined;
+  },
+});
 export const EditProperties = () => {
   const selectedElementId = useRecoilValue(selectedElemetnAtom);
+  const hasImage = useRecoilValue(hasImageState);
   if (selectedElementId === null) return null;
   return (
     <Card>
@@ -72,6 +86,11 @@ export const EditProperties = () => {
           id={selectedElementId}
         />
       </Section>
+      {hasImage && (
+        <Suspense fallback={<div>....Loading</div>}>
+          <ImageInfo />
+        </Suspense>
+      )}
     </Card>
   );
 };
